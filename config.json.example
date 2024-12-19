@@ -1,0 +1,6 @@
+{
+    "refresh_token": "gho_xxxxx",
+    "host": "0.0.0.0",
+    "port": 15432,
+    "auth_tokens": ["sk-token_1", "sk-token_2"]
+}

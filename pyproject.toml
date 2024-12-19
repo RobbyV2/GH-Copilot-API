@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "gh-copilot-api"
+version = "1.0.0"
+description = "Reverse engineered GitHub Copilot API, for use with OpenAI API Compatible services."
+readme = "readme.md"
+authors = ["RobbyV2 <robby@robby.blue>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.115.5"
+uvicorn = "^0.32.1"
+aiohttp = "^3.11.8"
+colorama = "^0.4.6"
+
+
+[tool.poetry.scripts]
+gh-copilot-api = "gh_copilot_api.main:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
