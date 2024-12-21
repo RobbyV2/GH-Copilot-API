@@ -89,6 +89,13 @@ async def list_models(auth_token: str = Depends(validate_auth_token)):
         "object": "list",
         "data": [
             {
+                "id": "o1",
+                "object": "model",
+                "created": 1687882411,
+                "owned_by": "github-copilot",
+                "permission": [],
+            },
+            {
                 "id": "o1-preview",
                 "object": "model",
                 "created": 1687882411,
