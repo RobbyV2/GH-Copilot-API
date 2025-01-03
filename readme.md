@@ -26,6 +26,8 @@ Please make sure to follow GitHub copilot TOS, and try to stick to coding-relate
     ```
 
     - Note down the `access_token` starting with `gho_`.
+  
+    Alternatively, use the `token-refresh.sh` script to automate the above.
 
 2. Install and configure
 
