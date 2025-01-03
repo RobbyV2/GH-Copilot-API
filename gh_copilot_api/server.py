@@ -77,7 +77,49 @@ def preprocess_request_body(request_body: dict) -> dict:
                 {"role": message["role"], "content": content_item["text"]}
             )
 
+    model: str = request_body.get("model", "")
+    if model and model.startswith("o1"):
+        for message in processed_messages:
+            if message["role"] == "system":
+                message["role"] = "user"
+
     return {**request_body, "messages": processed_messages}
+
+
+def convert_o1_response(data: dict) -> dict:
+    """Convert o1 model response format to standard format"""
+    if "choices" not in data:
+        return data
+    choices = data["choices"]
+    if not choices:
+        return data
+    converted_choices = []
+    for choice in choices:
+        if "message" in choice:
+            converted_choice = {
+                "index": choice["index"],
+                "delta": {"content": choice["message"]["content"]},
+            }
+            if "finish_reason" in choice:
+                converted_choice["finish_reason"] = choice["finish_reason"]
+            converted_choices.append(converted_choice)
+    return {**data, "choices": converted_choices}
+
+
+def convert_to_sse_events(data: dict) -> list[str]:
+    """Convert response data to SSE events"""
+    events = []
+    if "choices" in data:
+        for choice in data["choices"]:
+            event_data = {
+                "id": data.get("id", ""),
+                "created": data.get("created", 0),
+                "model": data.get("model", ""),
+                "choices": [choice],
+            }
+            events.append(f"data: {json.dumps(event_data)}\n\n")
+    events.append("data: [DONE]\n\n")
+    return events
 
 
 @app.get("/models")
@@ -148,6 +190,8 @@ async def proxy_chat_completions(
     async def stream_response():
         try:
             token = await get_cached_copilot_token()
+            model = request_body.get("model", "")
+            is_streaming = request_body.get("stream", False)
             async with ClientSession(timeout=TIMEOUT) as session:
                 async with session.post(
                     API_URL,
@@ -181,9 +225,16 @@ async def proxy_chat_completions(
                         yield json.dumps(error_response).encode("utf-8")
                         return
 
-                    async for chunk in response.content.iter_chunks():
-                        if chunk:
-                            yield chunk[0]
+                    if model.startswith("o1") and is_streaming:
+                        data = await response.json()
+                        converted_data = convert_o1_response(data)
+                        sse_events = convert_to_sse_events(converted_data)
+                        for event in sse_events:
+                            yield event.encode("utf-8")
+                    else:
+                        async for chunk in response.content.iter_chunks():
+                            if chunk:
+                                yield chunk[0]
 
         except Exception as e:
             logger.error(f"Error in stream_response: {str(e)}")

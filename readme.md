@@ -52,3 +52,8 @@ Any standard OpenAI API compatible service should now work with the exposed API.
 ## Notes
 
 - Despite some of the GitHub Copilot models having vision capabilities, GitHub does not provide any direct way to interface with these capabilities.
+- There isn't great error handling for errors beyond rate limits.
+
+## Credits
+
+Creators of [copilot-more](https://github.com/jjleng/copilot-more/)
