@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-15432}:${PORT:-15432}"
+    environment:
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-15432}
+      - AUTH_TOKENS=${AUTH_TOKENS}
+    restart: unless-stopped

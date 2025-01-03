@@ -6,46 +6,58 @@ Please make sure to follow GitHub copilot TOS, and try to stick to coding-relate
 
 ## Setup
 
-1. Get the "refresh token"
+- Bare metal installation:
 
-   The refresh token is pretty much your account token, but in this case it's restricted to Copilot use.
+  1. Get the "refresh token"
 
-    - Run the following command and note down the returned `device_code` and `user_code`.:
+     The refresh token is pretty much your account token, but in this case it's restricted to Copilot use.
 
-    ```bash
-    # 01ab8ac9400c4e429b23 is the client_id for VS Code
-    curl https://github.com/login/device/code -X POST -d 'client_id=01ab8ac9400c4e429b23&scope=user:email'
-    ```
+      - Run the following command and note down the returned `device_code` and `user_code`.:
 
-    - Open <https://github.com/login/device/> and enter the `user_code`.
+      ```bash
+      # 01ab8ac9400c4e429b23 is the client_id for VS Code
+      curl https://github.com/login/device/code -X POST -d 'client_id=01ab8ac9400c4e429b23&scope=user:email'
+      ```
 
-    - Replace `YOUR_DEVICE_CODE` with the `device_code` obtained earlier and run:
+      - Open <https://github.com/login/device/> and enter the `user_code`.
 
-    ```bash
-    curl https://github.com/login/oauth/access_token -X POST -d 'client_id=01ab8ac9400c4e429b23&scope=user:email&device_code=YOUR_DEVICE_CODE&grant_type=urn:ietf:params:oauth:grant-type:device_code'
-    ```
+      - Replace `YOUR_DEVICE_CODE` with the `device_code` obtained earlier and run:
 
-    - Note down the `access_token` starting with `gho_`.
-  
-    Alternatively, use the `token-refresh.sh` script to automate the above.
+      ```bash
+      curl https://github.com/login/oauth/access_token -X POST -d 'client_id=01ab8ac9400c4e429b23&scope=user:email&device_code=YOUR_DEVICE_CODE&grant_type=urn:ietf:params:oauth:grant-type:device_code'
+      ```
 
-2. Install and configure
+      - Note down the `access_token` starting with `gho_`.
+
+      Alternatively, use the `token-refresh.sh` script to automate the above.
+
+  2. Install and configure
+
+      ```bash
+      git clone https://github.com/RobbyV2/GH-Copilot-API.git
+      cd GH-Copilot-API
+      poetry install
+      cp config.json.example config.json
+      # Edit config.json with your refresh token, host, port, and auth tokens.
+      ```
+
+  3. Run
+
+      ```bash
+      poetry run python -m gh_copilot_api.main
+      ```
+
+      The server will start using the host and port specified in your config.json.
+
+- Docker Instructions 🐋
 
     ```bash
     git clone https://github.com/RobbyV2/GH-Copilot-API.git
     cd GH-Copilot-API
-    poetry install
-    cp config.json.example config.json
-    # Edit config.json with your refresh token, host, port, and auth tokens.
+    # Run the server. Ensure you either have all the config.json.example parameters in a .env file or pass it as an environment variable.
+    # Contained in .env.example
+    docker-compose up --build
     ```
-
-3. Run
-
-    ```bash
-    poetry run python -m gh_copilot_api.main
-    ```
-
-    The server will start using the host and port specified in your config.json.
 
 ## Use
 
