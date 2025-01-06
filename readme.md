@@ -37,8 +37,10 @@ Please make sure to follow GitHub copilot TOS, and try to stick to coding-relate
       git clone https://github.com/RobbyV2/GH-Copilot-API.git
       cd GH-Copilot-API
       poetry install
+      # Choose to use config.json or environment variables
       cp config.json.example config.json
-      # Edit config.json with your refresh token, host, port, and auth tokens.
+      cp .env.example .env
+      # Fill in the values for either one (or specify env at runtime)
       ```
 
   3. Run

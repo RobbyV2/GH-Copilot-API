@@ -51,8 +51,12 @@ app.add_middleware(
 )
 
 
-API_URL = "https://api.individual.githubcopilot.com/chat/completions"
+CHAT_COMPLETIONS_API_ENDPOINT = (
+    "https://api.individual.githubcopilot.com/chat/completions"
+)
+MODELS_API_ENDPOINT = "https://api.individual.githubcopilot.com/models"
 TIMEOUT = ClientTimeout(total=300)
+MAX_TOKENS = 10240
 
 
 def preprocess_request_body(request_body: dict) -> dict:
@@ -83,7 +87,8 @@ def preprocess_request_body(request_body: dict) -> dict:
             if message["role"] == "system":
                 message["role"] = "user"
 
-    return {**request_body, "messages": processed_messages}
+    max_tokens = request_body.get("max_tokens", MAX_TOKENS)
+    return {**request_body, "messages": processed_messages, "max_tokens": max_tokens}
 
 
 def convert_o1_response(data: dict) -> dict:
@@ -123,50 +128,29 @@ def convert_to_sse_events(data: dict) -> list[str]:
 
 
 @app.get("/models")
-async def list_models(auth_token: str = Depends(validate_auth_token)):
-    """
-    Returns a list of available models.
-    """
-    return {
-        "object": "list",
-        "data": [
-            {
-                "id": "o1",
-                "object": "model",
-                "created": 1687882411,
-                "owned_by": "github-copilot",
-                "permission": [],
-            },
-            {
-                "id": "o1-preview",
-                "object": "model",
-                "created": 1687882411,
-                "owned_by": "github-copilot",
-                "permission": [],
-            },
-            {
-                "id": "o1-mini",
-                "object": "model",
-                "created": 1687882411,
-                "owned_by": "github-copilot",
-                "permission": [],
-            },
-            {
-                "id": "gpt-4o",
-                "object": "model",
-                "created": 1687882411,
-                "owned_by": "github-copilot",
-                "permission": [],
-            },
-            {
-                "id": "claude-3.5-sonnet",
-                "object": "model",
-                "created": 1687882411,
-                "owned_by": "github-copilot",
-                "permission": [],
-            },
-        ],
-    }
+async def list_models():
+    """Proxies models request."""
+    try:
+        token = await get_cached_copilot_token()
+        async with ClientSession(timeout=TIMEOUT) as session:
+            async with session.get(
+                MODELS_API_ENDPOINT,
+                headers={
+                    "Authorization": f"Bearer {token['token']}",
+                    "Content-Type": "application/json",
+                    "editor-version": "vscode/1.95.3",
+                },
+            ) as response:
+                if response.status != 200:
+                    error_message = await response.text()
+                    logger.error(f"Models API error: {error_message}")
+                    raise HTTPException(
+                        response.status, f"Models API error: {error_message}"
+                    )
+                return await response.json()
+    except Exception as e:
+        logger.error(f"Error fetching models: {str(e)}")
+        raise HTTPException(500, f"Error fetching models: {str(e)}")
 
 
 @app.post("/chat/completions")
@@ -194,7 +178,7 @@ async def proxy_chat_completions(
             is_streaming = request_body.get("stream", False)
             async with ClientSession(timeout=TIMEOUT) as session:
                 async with session.post(
-                    API_URL,
+                    CHAT_COMPLETIONS_API_ENDPOINT,
                     json=request_body,
                     headers={
                         "Authorization": f"Bearer {token['token']}",
